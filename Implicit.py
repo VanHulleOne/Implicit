@@ -7,22 +7,24 @@ Created on Fri Apr 29 16:00:00 2016
 
 import numpy as np
 import matplotlib.pyplot as plt
+from sympy import geometry as g
 
 # Circle
 #func = 'x**2+y**2-10'
 # Cardiod
-# func = '((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2)'
+#func = '((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2)'
 #Cassini oval https://en.wikipedia.org/wiki/Implicit_curve
-#func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
-# wavey sruface
+func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
+# wavey surface
 #func = 'np.sin(x+y)-np.cos(x*y)+1'
 # Example
-func = '5*x**3 -17.3 * y**2 + np.sin(x*y)'
+#func = '5*x**3 -17.3 * y**2 + np.sin(x*y)'
 
 delta = 0.5
+size = 10
 
-x = np.arange(-5, 5, delta)
-y = np.arange(-5, 5, delta)
+x = np.arange(-size, size, delta)
+y = np.arange(-size, size, delta)
 
 X, Y = np.meshgrid(x, y)
 
@@ -34,6 +36,21 @@ cs = plt.contour(X, Y, F, [0])
 paths = cs.collections[0].get_paths()
 
 plt.show()
+
+print 'Number of connected components is: %d' %len(paths)
+
+def pairwise(l1):
+    l1Iter = iter(l1)
+    first = curr = next(l1Iter)
+    for p in l1Iter:
+        yield [curr, p]
+        curr = p
+    yield[curr, first]
+
+shape = g.Polygon(*paths[0].vertices)  
+
+
+
 
 #GRID_LENGTH = 100
 #import matplotlib.pyplot
