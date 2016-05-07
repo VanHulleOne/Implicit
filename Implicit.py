@@ -7,22 +7,39 @@ Created on Fri Apr 29 16:00:00 2016
 
 import numpy as np
 import matplotlib.pyplot as plt
+from sympy import geometry as g
+from collections import Counter
+from Geom import Polygon, Point, Line
+
+# The X and Y offsets in a point
+X, Y = 0, 1
+# The return results for a left right test
+LEFT, ON_EDGE, RIGHT = -1,0,1
+# For the line sweep event queue these are flags in the Point class
+# that tell if the point is the start, end, or intersection of a line
+START, END, INTER = 0,1,2
+# The distance tolerance given for our points
+EPSILON = 10e-6
+# The arctan of a small number is just itself so use the same value
+# for angular tests
+ANGLE_EPS = EPSILON
 
 # Circle
 #func = 'x**2+y**2-10'
 # Cardiod
-# func = '((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2)'
+#func = '((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2)'
 #Cassini oval https://en.wikipedia.org/wiki/Implicit_curve
-#func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
-# wavey sruface
+func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
+# wavey surface
 #func = 'np.sin(x+y)-np.cos(x*y)+1'
 # Example
-func = '5*x**3 -17.3 * y**2 + np.sin(x*y)'
+#func = '5*x**3 -17.3 * y**2 + np.sin(x*y)'
 
 delta = 0.5
+size = 10
 
-x = np.arange(-5, 5, delta)
-y = np.arange(-5, 5, delta)
+x = np.arange(-size, size, delta)
+y = np.arange(-size, size, delta)
 
 X, Y = np.meshgrid(x, y)
 
@@ -35,39 +52,31 @@ paths = cs.collections[0].get_paths()
 
 plt.show()
 
-#GRID_LENGTH = 100
-#import matplotlib.pyplot
-#from numpy import arange
-#from numpy import meshgrid
-#
-#def detectShape(fn, h):
-##Build Grid
-#    x_range = arange(-50.0, 50.0, h)
-#    y_range = arange(-50.0, 50.0, h)
-#    X, Y = meshgrid(x_range,y_range)
-#    
-#    FN = lambda x,y: eval(fn)
-#    
-#    F = FN(X,Y)
-#    
-#    cs = matplotlib.pyplot.contour(X, Y, F, [0])
-#    path = cs.collections[0].get_paths()
+print 'Number of connected components is: %d' %len(paths)
+
+prev = None
+pointList = []
+for coord in paths[0].vertices:
+    point = Point(coord)
+    if point != prev:
+        pointList.append(point)
+        prev = point
     
 
-#Run tests
+def pairwise(l1):
+    l1Iter = iter(l1)
+    first = prev = next(l1Iter)
+    for curr in l1Iter:
+        yield (prev, curr)
+        prev = curr
+    yield (prev, first)
+    
+poly = Polygon(pairwise(pointList))
 
-#Print # of connected components
-#Determine if S is simply connected
-#Determine if S has non-empty interior
-
-
-#Max distance from approximation to actual boundary
-#print "Max Distance from approximation to actual boundary:"
-#print h*2**.5 #The furthest distance our test could be off is where
- #the intersection touches the corner of a cell, but the actual
- #curve extends to the far corner
-#print
+#shape = g.Polygon(*paths[0].vertices)  
 
 
-#Draw shape
-#    matplotlib.pyplot.show()
+
+
+
+    
