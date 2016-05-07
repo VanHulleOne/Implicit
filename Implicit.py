@@ -29,11 +29,12 @@ ANGLE_EPS = EPSILON
 # Cardiod
 #func = '((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2)'
 #Cassini oval https://en.wikipedia.org/wiki/Implicit_curve
-func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
+#func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
 # wavey surface
 #func = 'np.sin(x+y)-np.cos(x*y)+1'
 # Example
 #func = '5*x**3 -17.3 * y**2 + np.sin(x*y)'
+func = '-4+(x**2+y**2)**0.5'
 
 delta = 0.5
 size = 10
@@ -71,7 +72,7 @@ def pairwise(l1):
         prev = curr
     yield (prev, first)
     
-poly = Polygon(pairwise(pointList))
+#poly = Polygon(pairwise(pointList))
 
 #shape = g.Polygon(*paths[0].vertices)  
 
