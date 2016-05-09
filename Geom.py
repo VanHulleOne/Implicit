@@ -37,12 +37,9 @@ class Polygon:
         
     def addPoints(self, pointGen):
         for p1, p2 in pointGen:
-            """
-            Each line from the file is split into two lists, one for
-            each point it represents. This points are sorted so that
-            the start of the line is the minimum X value.
-            """
-            line = Line(sorted(p1.pointVector, p2.pointVector))
+
+            line = Line(sorted([p1, p2]))
+#            print line
 
             self.lines.add(line)
             for point in line:
@@ -60,6 +57,9 @@ class Polygon:
                 """
                 self.pointCount[str(point)] += 1
                 self.points.append(point)
+                
+#        for l in self.lines:
+#            print l
                 
     def runRest(self):      
         if any(value != 2 for value in self.pointCount.itervalues()):
@@ -101,10 +101,10 @@ class Polygon:
         self.printShape(self.sortedLines, 'polygon')
         
         # Calculated the convex hull
-        self.convexHull = self.createConvexHull()
+#        self.convexHull = self.createConvexHull()
         
         # Print the convex hull
-        self.printShape(self.convexHull, 'convex hull')
+#        self.printShape(self.convexHull, 'convex hull')
         
     def createConvexHull(self):
         """
@@ -280,13 +280,23 @@ class Polygon:
                             str(line1) + '\n' + str(line2) + '\nIntersect at '+
                             str(intPoint))
         return None
+        
+    def printShape(self, shape, name):
+        print 'The counter-clockwise sorted ' + name + ' is:'
+        for line in shape:
+            print line
+        print ''
                 
 
 class Line(object):
     
     def __init__(self, line):
-        self.start = Point(line[START], START, self)
-        self.end = Point(line[END], END, self)
+        self.start = Point(line[START].pointVector, START, self)
+ #       self.start.pointType = START
+ #       self.start.parentLine = self
+        self.end = Point(line[END].pointVector, END, self)
+#        self.end.pointType = END
+#        self.end.parentLine = self
         self.length = self.start - self.end
         self.vector = np.array([self.end.x-self.start.x,
                                 self.end.y-self.start.y])
@@ -360,12 +370,21 @@ class Point(object):
     
     def __lt__(self, other):
         return self.__key() < other.__key()
+        
+    def __gt__(self, other):
+        return not self.__lt__(other)
     
     def __eq__(self, other):
-        return self.__key() == other.__key()
+        return False if other is None else self.__key() == other.__key()
+        
+    def __ne__(self, other):
+        return not self.__eq__(other)
     
     def __hash__(self):
         return hash(self.__key())
         
     def __repr__(self):
         return 'X%f Y%f'%(self.pointVector[X], self.pointVector[Y])
+    
+    def __str__(self):
+        return str(self.__key())
