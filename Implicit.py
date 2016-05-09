@@ -33,9 +33,9 @@ ANGLE_EPS = EPSILON
 # wavey surface
 #func = 'np.sin(x+y)-np.cos(x*y)+1'
 # Example
-func = '5*x**3 -17.3 * y**2 + np.sin(x*y)'
+#func = '5*x**3 -17.3 * y**2 + np.sin(x*y)'
 # Distance
-#func = '-(-4+(x**2+y**2)**0.5)'
+func = '-(-4+(x**2+y**2)**0.5)'
 
 delta = 0.5
 size = 10
@@ -138,6 +138,9 @@ def sharpCorner(lines, num, tolerance):
         if(sharpX.send(normalizedSlope[X]) or sharpY.send(normalizedSlope[Y])):
             return True
     return False
+    
+def isDistance():
+    pass
     
 if sharpCorner(poly.lines, 2, 0.4):
     print 'The shape has at least one sharp corner.'
