@@ -29,19 +29,18 @@ class Polygon:
         """
         Does the hard work and calls all of the required functions.
         """
-        self.lines = set() # Store the lines in a set for unorered fast retrieval
+        self.lines = [] #set() # Store the lines in a set for unorered fast retrieval
         self.pointCount = Counter() # Counts the number of times a point appears
         self.points = [] # a List of the points
         self.addPoints(pointGen)
-        self.runRest()
         
     def addPoints(self, pointGen):
         for p1, p2 in pointGen:
 
-            line = Line(sorted([p1, p2]))
+            line = Line([p1,p2])#sorted([p1, p2]))
 #            print line
 
-            self.lines.add(line)
+            self.lines.append(line)
             for point in line:
                 """
                 For each point in the line due two steps. The first is
@@ -57,11 +56,8 @@ class Polygon:
                 """
                 self.pointCount[str(point)] += 1
                 self.points.append(point)
-                
-#        for l in self.lines:
-#            print l
-                
-    def runRest(self):      
+
+    def simplyConnected(self):      
         if any(value != 2 for value in self.pointCount.itervalues()):
             """
             If any value in the pointCount does not equal two we know
@@ -78,12 +74,15 @@ class Polygon:
                         if self.pointCount[point] != 2]
             
             # Create the message to be displayed            
-            message = ['\nThe following point(s) do not occure twice:\n']
-            message.append('Point' + '\t'*4 + 'Count\n')
+            message = ['The following point(s) do not occure twice:\n']
+            message.append('Point' + '\t'*3 + 'Count\n')
             for point, count in violators:
                 message.append(str(point) + '\t' + str(count) + '\n')
-            raise Exception(''.join(message))
-        
+            return '\nThe shape is not simply connected' + '\n' + ''.join(message)
+        else:
+            return '\nThe shape is simply connected.'
+            
+    def oldStuff(self):
         # Sort all of the points according to Point class' __eq__ __lt__ methods
         eventQ = sorted(self.points, reverse=True)
         
@@ -98,7 +97,7 @@ class Polygon:
         self.sortedLines = self.orderLines()
         
         # Print the polygon
-        self.printShape(self.sortedLines, 'polygon')
+#        self.printShape(self.sortedLines, 'polygon')
         
         # Calculated the convex hull
 #        self.convexHull = self.createConvexHull()
@@ -321,6 +320,10 @@ class Line(object):
     def projectPoint(self, point):
         v = point.pointVector - self.start.pointVector
         return np.dot(v, self.vector)/self.length
+        
+    def normalizedSlope(self):
+        delta = self.end.pointVector - self.start.pointVector
+        return delta/self.length
     
     def __iter__(self):
         yield self.start
@@ -386,5 +389,5 @@ class Point(object):
     def __repr__(self):
         return 'X%f Y%f'%(self.pointVector[X], self.pointVector[Y])
     
-    def __str__(self):
-        return str(self.__key())
+#    def __str__(self):
+#        return str(self.__key())
