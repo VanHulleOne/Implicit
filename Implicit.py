@@ -51,6 +51,7 @@ FN = lambda x,y: eval(func)
 F = FN(xGrid, yGrid)
 
 cs = plt.contour(xGrid, yGrid, F, [0], colors = 'r')
+csf = plt.contourf(xGrid, yGrid, F, [0, np.inf], colors = 'c')
 paths = cs.collections[0].get_paths()
 
 plt.show()
@@ -104,17 +105,12 @@ print ''
 """ Use SymPy geometry module to create the shape so we can get its area. """
 shape = g.Polygon(*paths[0].vertices)  
 
-""" Create the shape again but this time at delta*2 above zero. If the area
-is larger than the shape then we know that positive is outside of the shape
-and therefor the shape has an empty interior is empty.
 """
-csHigher = plt.contour(xGrid, yGrid, F,[delta*2], colors = 'g')
-pathsHigher = csHigher.collections[0].get_paths()
-shapeHigher = g.Polygon(*pathsHigher[0].vertices)
-
-isEmpty = abs(shapeHigher.area) > abs(shape.area)
-
-if isEmpty:
+The contour is drawn with the positive Z direction being to the left
+so if shape has a positive area then the interior is non-empty. If shape
+has a negative area then the interior is empty.
+"""
+if shape.area < 0:
     print 'The figure has an empty interior'
 else:
     print 'The figure has a non-empty interior'
