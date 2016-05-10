@@ -258,6 +258,57 @@ class Polygon:
                             str(intPoint))
         return None
         
+    def triangleArea(self, line, point, divide=True):
+        """
+        Returns the area of the triangle formed by line and point.
+        
+        Takes the two points from the line plus the point, forms them into
+        a matrix and then finds the determinant of that matrix which is twice
+        the triangle's area. Divide that by two and return the result.
+        
+        Parameters
+        ----------
+        line - the base of the triangle
+        point - the top of the trangle
+        divide - default=True if True then it returns the actual area, if False
+                    then it returns twice the area to reduce the number of divisions.
+        
+        Return
+        ------
+        float - the area of the triangle
+        """
+        # form a 3x3 matrix of ones
+        matrix = np.ones([3,3])
+        matrix[0][:2] = line.start.pointVector
+        matrix[1][:2] = line.end.pointVector
+        matrix[2][:2] = point.pointVector
+        if divide:
+            return np.linalg.det(matrix)/2.0
+        else:
+            return np.linalg.det(matrix)
+    
+    def calcArea(self):
+        """
+        Calculates are return the area of a shape.
+        
+        creates a reference point for the shape and then sums the calls
+        to triangleArea().
+                
+        Parameters
+        ----------
+        shape - the input shape to whose area we want
+        
+        Return
+        ------
+        float - the area of the shape
+        """
+        refPoint = self.lines[0].start # the reference point
+        # sum the calls to triangleArea() with divide set to False
+        # This will return twice the area.
+        area = sum(self.triangleArea(line, refPoint, False) for line in self.lines)
+        # Divide the area and return it.        
+        return area/2.0    
+    
     def printShape(self, shape, name):
         print 'The counter-clockwise sorted ' + name + ' is:'
         for line in shape:
