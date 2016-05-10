@@ -29,13 +29,13 @@ ANGLE_EPS = EPSILON
 # Cardiod
 #func = '((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2)'
 #Cassini oval https://en.wikipedia.org/wiki/Implicit_curve
-func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
+#func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
 # wavey surface
 #func = 'np.sin(x+y)-np.cos(x*y)+1'
 # Example
 #func = '5*x**3 -17.3 * y**2 + np.sin(x*y)'
 # Distance
-#func = '(-4+(x**2+y**2)**0.5)'
+func = '(-4+(x**2+y**2)**0.5)'
 
 delta = 0.5
 maxError = np.sqrt(2*delta**2)
@@ -60,7 +60,7 @@ print '\nNumber of connected components is: %d' %len(paths)
 
 prev = None
 pointList = []
-for coord in paths[0].vertices:
+for coord in paths[len(paths)/2].vertices:
     point = Point(coord)
     if point != prev:
         pointList.append(point)
@@ -92,7 +92,7 @@ else:
     print 'The figure has a non-empty interior'
 
 print ''
-print 'The max distance from the approximations is {:.3f}'.format(maxError)
+print 'The max distance from the approximation is {:.3f}'.format(maxError)
 print ''
 
 def quick2ndDeriv_coro(num, tolerance):
@@ -143,27 +143,38 @@ def sharpCorner(lines, num, tolerance):
             return True
     return False
     
-def isDistance(p1, p2, p3):
-    line1= Line([p1, p2])
-    line2 = Line([p2,p3])
-    p1Hat = Point(p2.pointVector-line1.normalizedSlope())
-    p3Hat = Point(p2.pointVector+line2.normalizedSlope())
+def isDistance(line1, line2):
+    midPoint = line1.end
+    ''' To find the bisector I take the normalized slopes (length of line = 1)
+    and add that to middle point.'''
+    p1Hat = Point(midPoint.pointVector-line1.normalizedSlope())
+    p3Hat = Point(midPoint.pointVector+line2.normalizedSlope())
+    ''' half way between pHats is the bisector '''
     testPoint = Point((p1Hat.pointVector+p3Hat.pointVector)/2.0)
+    ''' put that point into our function '''
     result = FN(testPoint.x, testPoint.y)
     if isEmpty and result < 0:
-        bisectLine = Line([testPoint, p2])
-        testPoint = Point(p2.pointVector + bisectLine.normalizedSlope())
-    if abs(p2-testPoint - FN(testPoint.x, testPoint.y)) < maxError:
+        ''' Here i test to see if the point is inside or outside and then
+        switch it to outside if necessary to make sure i'm not getting closer
+        to a different part of the line.'''
+        bisectLine = Line([testPoint, midPoint])
+        testPoint = Point(midPoint.pointVector + bisectLine.normalizedSlope())
+    ''' if the abs distance is less than my grid's max error return True '''
+    if abs(midPoint-testPoint - FN(testPoint.x, testPoint.y)) < maxError:
         return True
     return False
-        
+    
+lineArray = np.array(poly.lines[:len(poly.lines) if len(poly.lines)%2 == 0
+                        else len(poly.lines)-1])
+lineArray = lineArray.reshape((len(lineArray)/2,2))
+      
 if sharpCorner(poly.lines, 2, 0.4):
     print 'The shape has at least one sharp corner.'
 else:
     print 'The shape does not have sharp corners.'
     
 print ''
-if isDistance(*pointList[:3]):
+if all(isDistance(*linePair) for linePair in lineArray):
     print 'The function is the distance function.'
 else:
     print 'The function is not the distance function.'
