@@ -74,7 +74,7 @@ class Polygon:
                         if self.pointCount[point] != 2]
             
             # Create the message to be displayed            
-            message = ['The following point(s) do not occure twice:\n']
+            message = ['The following point(s) do not occure exactly twice:\n']
             message.append('Point' + '\t'*3 + 'Count\n')
             for point, count in violators:
                 message.append(str(point) + '\t' + str(count) + '\n')
@@ -82,28 +82,6 @@ class Polygon:
         else:
             return '\nThe shape is simply connected.'
             
-    def oldStuff(self):
-        # Sort all of the points according to Point class' __eq__ __lt__ methods
-        eventQ = sorted(self.points, reverse=True)
-        
-        # The last point in eventQ is the lowest point so save that for later
-        self.referencePoint = eventQ[-1]
-        # Keep the line which belongs to the reference point
-        self.referenceLine = self.referencePoint.parentLine
-        # Run lineSweep algorithm to see if there are any extra intersections
-        # Line sweep throws the exception if there are any.
-        self.lineSweep(eventQ)
-        # Sorts the lines in ccw order starting from the reference point
-        self.sortedLines = self.orderLines()
-        
-        # Print the polygon
-#        self.printShape(self.sortedLines, 'polygon')
-        
-        # Calculated the convex hull
-#        self.convexHull = self.createConvexHull()
-        
-        # Print the convex hull
-#        self.printShape(self.convexHull, 'convex hull')
         
     def createConvexHull(self):
         """
