@@ -29,16 +29,16 @@ ANGLE_EPS = EPSILON
 # Cardiod
 #func = '((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2)'
 #Cassini oval https://en.wikipedia.org/wiki/Implicit_curve
-#func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
+func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
 # wavey surface
 #func = 'np.sin(x+y)-np.cos(x*y)+1'
 # Example
 #func = '5*x**3 -17.3 * y**2 + np.sin(x*y)'
 # Distance
-func = '(-4+(x**2+y**2)**0.5)'
-
-delta = 0.5
-maxError = np.sqrt(2*delta**2)
+#func = '(-4+(x**2+y**2)**0.5)'
+h = 0.5
+delta = np.sqrt(h**2/2)
+maxError = h#np.sqrt(2*delta**2)
 size = 10
 
 x = np.arange(-size, size, delta)
@@ -59,28 +59,56 @@ print '\n' + func
 print '\nNumber of connected components is: %d' %len(paths)
 
 prev = None
-pointList = []
+pointList = [] # the list wich will store all of the points in the shape
 for coord in paths[len(paths)/2].vertices:
+    """
+    Due to the grid layout some points are repeated so we remove the
+    duplicates when creating the point list. For functions which produce multiple
+    contours we are only testing the middle contour.
+    """
     point = Point(coord)
     if point != prev:
         pointList.append(point)
         prev = point
-    
 
 def pairwise(l1):
+    """
+    A generator to yield points in line pairs.
+    
+    The points are the boundry of the shape, to turn those into lines
+    we need to get them into pairs where the shared point between two
+    lines is repeated. This method does that.
+    
+    Parameter
+    ---------
+    l1 - the list to pair
+    
+    Yield
+    -----
+    A tuple of the elements paired
+    """
     l1Iter = iter(l1)
     prev = next(l1Iter)
     for curr in l1Iter:
         yield (prev, curr)
         prev = curr
-    
+
+""" Create the shape from my Geom module which is a pared down version of
+my submissions for Program 2 """    
 poly = Polygon(pairwise(pointList))
 
+""" The shape is simply connected if all of the points appear exactly twice."""
 print poly.simplyConnected()
 print ''
 
+""" Use SymPy geometry module to create the shape so we can get its area. """
 shape = g.Polygon(*paths[0].vertices)  
-csHigher = plt.contour(xGrid, yGrid, F,[delta], colors = 'g')
+
+""" Create the shape again but this time at delta*2 above zero. If the area
+is larger than the shape then we know that positive is outside of the shape
+and therefor the shape has an empty interior is empty.
+"""
+csHigher = plt.contour(xGrid, yGrid, F,[delta*2], colors = 'g')
 pathsHigher = csHigher.collections[0].get_paths()
 shapeHigher = g.Polygon(*pathsHigher[0].vertices)
 
@@ -96,12 +124,35 @@ print 'The max distance from the approximation is {:.3f}'.format(maxError)
 print ''
 
 def quick2ndDeriv_coro(num, tolerance):
+    """
+    yields True if the 2nd derivative is larger than tolerance.
+    
+    This coroutine takes yields in values and then stores two sets of
+    rolling averages. The two averages are each num long with the falling
+    off value of second being sent into first. If the difference between the
+    two averages become larger than tolerance then True is yielded else False
+    is yieled.
+    
+    Parameters
+    ----------
+    num - an int for the length of the rolling average
+    tolerance - above this and True is yielded
+    
+    Yields
+    ------
+    in - the values to be tracked
+    out - True if the two averages have a difference greater than tolerance
+    else False.
+    """
+    
+    """ Setting up the first rolling average. """
     first = rollingAvg_coro(num)
     next(first)
     isSharp = False
     for i in xrange(num):
         temp = yield isSharp
         first.send(temp)
+    """ Setting up the second rolling average."""
     second = rollingAvg_coro(num)
     next(second)
     q = deque()
@@ -110,6 +161,7 @@ def quick2ndDeriv_coro(num, tolerance):
         second.send(temp)
         q.append(temp)
     while 1:
+        """ Continuing the rolling averages after both have been initialized. """
         temp = yield isSharp
         q.append(temp)
         firstAvg = first.send(q.popleft())
@@ -118,10 +170,27 @@ def quick2ndDeriv_coro(num, tolerance):
             isSharp = True
             
 def rollingAvg_coro(num):
+    """
+    A coroutine which yields a rolling average num long.
+    
+    The coroutine yields in values and yields out the current rolling average.
+    The roll is num long.
+    
+    Parameter
+    ---------
+    num - an int for the length of the rolling average
+    
+    Yields
+    ------
+    in - the values to be averaged
+    out - the current rolling average
+    """
+    
     q = deque()
     total = 0
     average = None
     for i in xrange(num):
+        """ This sets up the initial num values. """
         temp = yield average 
         total += temp
         q.append(temp)
@@ -133,6 +202,30 @@ def rollingAvg_coro(num):
         q.append(temp)
 
 def sharpCorner(lines, num, tolerance):
+    """
+    Returns True if lines contains a sharp corner else False.
+    
+    Since angles wrap around that did not seem like a good way to test
+    if there were sharp angles. Instead decided to normalize the length of each
+    segment to one and then find its deltaX and deltaY, what I have called
+    the normalized slope. Then all we have to do is compare the normalized
+    slope of one line to the next and if either delta is > tol there is a sharp
+    corner. Due to some irregularities in the contour I found that taking the
+    rolling average of a few lines in a row helps smooth out the data and
+    provide better results. From testing a rolling overage of 2 or 3 seems
+    sufficient. A tolerance of 0.4 is around 23 degrees and also seems to work.
+    
+    Parameters
+    ----------
+    lines - The list of Lines to test
+    num - The length of the rolling average
+    tolerance - The max different in delta averages allowed (normalized to one)
+    
+    Return
+    ------
+    True if tolerance is exceeded else False    
+    """
+    
     sharpX = quick2ndDeriv_coro(num, tolerance)
     next(sharpX)
     sharpY = quick2ndDeriv_coro(num, tolerance)
@@ -144,36 +237,68 @@ def sharpCorner(lines, num, tolerance):
     return False
     
 def isDistance(line1, line2):
-    midPoint = line1.end
-    ''' To find the bisector I take the normalized slopes (length of line = 1)
-    and add that to middle point.'''
+    """
+    Tests if the input function is the distance function.
+    
+    An angle bisector is used to pick a test point outside of the shape
+    nearest an exhisting point. If the distance from the shape point to the
+    test point is the same value (within a tolerance) as func(testPoint) then
+    the function is the distance function.
+    
+    Parameters
+    ----------
+    line1, line2 - The two adjacent lines to use for the test
+    
+    Return
+    ------
+    True if the distance and Func return the same value (within a tolerance)
+    """
+    
+    """ The shared point of the two lines. """
+    midPoint = line1.end 
+    """
+    To find the bisector I take the normalized slopes (length of line = 1)
+    and add that to middle point.
+    """
     p1Hat = Point(midPoint.pointVector-line1.normalizedSlope())
     p3Hat = Point(midPoint.pointVector+line2.normalizedSlope())
-    ''' half way between pHats is the bisector '''
+    """ half way between pHats is the bisector the other point of the bisector """
     testPoint = Point((p1Hat.pointVector+p3Hat.pointVector)/2.0)
-    ''' put that point into our function '''
+
     result = FN(testPoint.x, testPoint.y)
-    if isEmpty and result < 0:
-        ''' Here i test to see if the point is inside or outside and then
-        switch it to outside if necessary to make sure i'm not getting closer
-        to a different part of the line.'''
+    if not (isEmpty ^ result < 0):
+        """
+        If the shape is empty and the result is negative or if the shape is not
+        empty and the result is positive then our test point is inside the shape
+        so pick a new one outside the shape.
+        """
         bisectLine = Line([testPoint, midPoint])
         testPoint = Point(midPoint.pointVector + bisectLine.normalizedSlope())
     ''' if the abs distance is less than my grid's max error return True '''
     if abs(midPoint-testPoint - FN(testPoint.x, testPoint.y)) < maxError:
         return True
     return False
-    
-lineArray = np.array(poly.lines[:len(poly.lines) if len(poly.lines)%2 == 0
-                        else len(poly.lines)-1])
-lineArray = lineArray.reshape((len(lineArray)/2,2))
+
+
       
-if sharpCorner(poly.lines, 2, 0.4):
+if sharpCorner(poly.lines, 3, 0.4):
     print 'The shape has at least one sharp corner.'
 else:
     print 'The shape does not have sharp corners.'
-    
+
+""" Create a NumPy array of an even length. """   
+lineArray = np.array(poly.lines[:len(poly.lines) if len(poly.lines)%2 == 0
+                        else len(poly.lines)-1])
+""" Reshape the array to put the lines in pairs. """
+lineArray = lineArray.reshape((len(lineArray)/2,2))
+   
 print ''
+"""
+If we only test one point if it matches the distance function we may have
+just found an anomoly so pair the lines and test the pairs. This creates
+a test point outside every other point in the shape. If any do not match
+the distance then we mark it as not a distance function.
+"""
 if all(isDistance(*linePair) for linePair in lineArray):
     print 'The function is the distance function.'
 else:
