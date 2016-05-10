@@ -7,7 +7,6 @@ Created on Fri Apr 29 16:00:00 2016
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sympy import geometry as g
 from Geom import Polygon, Point, Line
 from collections import deque
 """
@@ -15,8 +14,8 @@ from collections import deque
 Only change the values of func and h in the area below.
 """
 # Cardiod
-func = '-(((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2))'
-h = 0.5
+#func = '(((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2))'
+h = 0.05
 
 """
 Only change the two values above this line.
@@ -41,7 +40,7 @@ ANGLE_EPS = EPSILON
 # Cardiod
 #func = '-(((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2))'
 #Cassini oval https://en.wikipedia.org/wiki/Implicit_curve
-#func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
+func = '-((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
 # wavey surface
 #func = 'np.sin(x+y)-np.cos(x*y)+1'
 # Example
@@ -80,7 +79,7 @@ for coord in paths[len(paths)/2].vertices:
     contours we are only testing the middle contour.
     """
     point = Point(coord)
-    if point != prev:
+    if prev is None or abs(point - prev) > EPSILON:
         pointList.append(point)
         prev = point
 
@@ -112,23 +111,22 @@ poly = Polygon(pairwise(pointList))
 
 """ The shape is simply connected if all of the points appear exactly twice."""
 print poly.simplyConnected()
-print ''
-
-""" Use SymPy geometry module to create the shape so we can get its area. """
-shape = g.Polygon(*paths[0].vertices)  
+print '' 
 
 """
 The contour is drawn with the positive Z direction being to the left
 so if shape has a positive area then the interior is non-empty. If shape
 has a negative area then the interior is empty.
 """
-if shape.area < 0:
+isEmpty = bool(poly.calcArea() < 0)
+
+if isEmpty:
     print 'The figure has an empty interior'
 else:
     print 'The figure has a non-empty interior'
 
 print ''
-print 'The max distance from the approximation is {:.3f}'.format(maxError)
+print 'The max distance from the approximation is {:.6f}'.format(maxError)
 print ''
 
 def quick2ndDeriv_coro(num, tolerance):
@@ -274,7 +272,7 @@ def isDistance(line1, line2):
     testPoint = Point((p1Hat.pointVector+p3Hat.pointVector)/2.0)
 
     result = FN(testPoint.x, testPoint.y)
-    if not (isEmpty ^ result < 0):
+    if not (isEmpty ^ (result < 0)):
         """
         If the shape is empty and the result is negative or if the shape is not
         empty and the result is positive then our test point is inside the shape
