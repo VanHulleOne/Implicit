@@ -29,22 +29,18 @@ class Polygon:
         """
         Does the hard work and calls all of the required functions.
         """
-        self.lines = set() # Store the lines in a set for unorered fast retrieval
+        self.lines = [] #set() # Store the lines in a set for unorered fast retrieval
         self.pointCount = Counter() # Counts the number of times a point appears
         self.points = [] # a List of the points
         self.addPoints(pointGen)
-        self.runRest()
         
     def addPoints(self, pointGen):
         for p1, p2 in pointGen:
-            """
-            Each line from the file is split into two lists, one for
-            each point it represents. This points are sorted so that
-            the start of the line is the minimum X value.
-            """
-            line = Line(sorted(p1.pointVector, p2.pointVector))
 
-            self.lines.add(line)
+            line = Line([p1,p2])#sorted([p1, p2]))
+#            print line
+
+            self.lines.append(line)
             for point in line:
                 """
                 For each point in the line due two steps. The first is
@@ -60,8 +56,8 @@ class Polygon:
                 """
                 self.pointCount[str(point)] += 1
                 self.points.append(point)
-                
-    def runRest(self):      
+
+    def simplyConnected(self):      
         if any(value != 2 for value in self.pointCount.itervalues()):
             """
             If any value in the pointCount does not equal two we know
@@ -78,12 +74,15 @@ class Polygon:
                         if self.pointCount[point] != 2]
             
             # Create the message to be displayed            
-            message = ['\nThe following point(s) do not occure twice:\n']
-            message.append('Point' + '\t'*4 + 'Count\n')
+            message = ['The following point(s) do not occure twice:\n']
+            message.append('Point' + '\t'*3 + 'Count\n')
             for point, count in violators:
                 message.append(str(point) + '\t' + str(count) + '\n')
-            raise Exception(''.join(message))
-        
+            return '\nThe shape is not simply connected' + '\n' + ''.join(message)
+        else:
+            return '\nThe shape is simply connected.'
+            
+    def oldStuff(self):
         # Sort all of the points according to Point class' __eq__ __lt__ methods
         eventQ = sorted(self.points, reverse=True)
         
@@ -98,13 +97,13 @@ class Polygon:
         self.sortedLines = self.orderLines()
         
         # Print the polygon
-        self.printShape(self.sortedLines, 'polygon')
+#        self.printShape(self.sortedLines, 'polygon')
         
         # Calculated the convex hull
-        self.convexHull = self.createConvexHull()
+#        self.convexHull = self.createConvexHull()
         
         # Print the convex hull
-        self.printShape(self.convexHull, 'convex hull')
+#        self.printShape(self.convexHull, 'convex hull')
         
     def createConvexHull(self):
         """
@@ -280,13 +279,23 @@ class Polygon:
                             str(line1) + '\n' + str(line2) + '\nIntersect at '+
                             str(intPoint))
         return None
+        
+    def printShape(self, shape, name):
+        print 'The counter-clockwise sorted ' + name + ' is:'
+        for line in shape:
+            print line
+        print ''
                 
 
 class Line(object):
     
     def __init__(self, line):
-        self.start = Point(line[START], START, self)
-        self.end = Point(line[END], END, self)
+        self.start = Point(line[START].pointVector, START, self)
+ #       self.start.pointType = START
+ #       self.start.parentLine = self
+        self.end = Point(line[END].pointVector, END, self)
+#        self.end.pointType = END
+#        self.end.parentLine = self
         self.length = self.start - self.end
         self.vector = np.array([self.end.x-self.start.x,
                                 self.end.y-self.start.y])
@@ -311,6 +320,10 @@ class Line(object):
     def projectPoint(self, point):
         v = point.pointVector - self.start.pointVector
         return np.dot(v, self.vector)/self.length
+        
+    def normalizedSlope(self):
+        delta = self.end.pointVector - self.start.pointVector
+        return delta/self.length
     
     def __iter__(self):
         yield self.start
@@ -360,12 +373,21 @@ class Point(object):
     
     def __lt__(self, other):
         return self.__key() < other.__key()
+        
+    def __gt__(self, other):
+        return not self.__lt__(other)
     
     def __eq__(self, other):
-        return self.__key() == other.__key()
+        return False if other is None else self.__key() == other.__key()
+        
+    def __ne__(self, other):
+        return not self.__eq__(other)
     
     def __hash__(self):
         return hash(self.__key())
         
     def __repr__(self):
         return 'X%f Y%f'%(self.pointVector[X], self.pointVector[Y])
+    
+#    def __str__(self):
+#        return str(self.__key())
