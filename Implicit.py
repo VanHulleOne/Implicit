@@ -10,6 +10,18 @@ import matplotlib.pyplot as plt
 from sympy import geometry as g
 from Geom import Polygon, Point, Line
 from collections import deque
+"""
+******************************************************************************
+Only change the values of func and h in the area below.
+"""
+# Cardiod
+func = '-(((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2))'
+h = 0.5
+
+"""
+Only change the two values above this line.
+*******************************************************************************
+"""
 
 # The X and Y offsets in a point
 X, Y = 0, 1
@@ -27,16 +39,16 @@ ANGLE_EPS = EPSILON
 # Circle
 #func = 'x**2+y**2-10'
 # Cardiod
-#func = '((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2)'
+#func = '-(((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2))'
 #Cassini oval https://en.wikipedia.org/wiki/Implicit_curve
-func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
+#func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
 # wavey surface
 #func = 'np.sin(x+y)-np.cos(x*y)+1'
 # Example
 #func = '5*x**3 -17.3 * y**2 + np.sin(x*y)'
 # Distance
 #func = '(-4+(x**2+y**2)**0.5)'
-h = 0.5
+#h = 0.5
 delta = np.sqrt(h**2/2)
 maxError = h#np.sqrt(2*delta**2)
 size = 10
