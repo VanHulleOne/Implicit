@@ -29,15 +29,16 @@ ANGLE_EPS = EPSILON
 # Cardiod
 #func = '((x-3)**2+y**2+5*(x-3))**2-5**2*((x-3)**2+y**2)'
 #Cassini oval https://en.wikipedia.org/wiki/Implicit_curve
-#func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
+func = '((x**2+y**2)**2-2*5**2*(x**2-y**2)-(5**4-5**4))'
 # wavey surface
 #func = 'np.sin(x+y)-np.cos(x*y)+1'
 # Example
 #func = '5*x**3 -17.3 * y**2 + np.sin(x*y)'
 # Distance
-func = '-(-4+(x**2+y**2)**0.5)'
+#func = '(-4+(x**2+y**2)**0.5)'
 
 delta = 0.5
+maxError = np.sqrt(2*delta**2)
 size = 10
 
 x = np.arange(-size, size, delta)
@@ -53,6 +54,7 @@ cs = plt.contour(xGrid, yGrid, F, [0], colors = 'r')
 paths = cs.collections[0].get_paths()
 
 plt.show()
+print '\n' + func
 
 print '\nNumber of connected components is: %d' %len(paths)
 
@@ -82,13 +84,15 @@ csHigher = plt.contour(xGrid, yGrid, F,[delta], colors = 'g')
 pathsHigher = csHigher.collections[0].get_paths()
 shapeHigher = g.Polygon(*pathsHigher[0].vertices)
 
-if abs(shapeHigher.area) > abs(shape.area):
+isEmpty = abs(shapeHigher.area) > abs(shape.area)
+
+if isEmpty:
     print 'The figure has an empty interior'
 else:
     print 'The figure has a non-empty interior'
 
 print ''
-print 'The max distance from the approximations is {:.3f}'.format(np.sqrt(2*delta**2))
+print 'The max distance from the approximations is {:.3f}'.format(maxError)
 print ''
 
 def quick2ndDeriv_coro(num, tolerance):
@@ -139,16 +143,31 @@ def sharpCorner(lines, num, tolerance):
             return True
     return False
     
-def isDistance():
-    pass
-    
+def isDistance(p1, p2, p3):
+    line1= Line([p1, p2])
+    line2 = Line([p2,p3])
+    p1Hat = Point(p2.pointVector-line1.normalizedSlope())
+    p3Hat = Point(p2.pointVector+line2.normalizedSlope())
+    testPoint = Point((p1Hat.pointVector+p3Hat.pointVector)/2.0)
+    result = FN(testPoint.x, testPoint.y)
+    if isEmpty and result < 0:
+        bisectLine = Line([testPoint, p2])
+        testPoint = Point(p2.pointVector + bisectLine.normalizedSlope())
+    if abs(p2-testPoint - FN(testPoint.x, testPoint.y)) < maxError:
+        return True
+    return False
+        
 if sharpCorner(poly.lines, 2, 0.4):
     print 'The shape has at least one sharp corner.'
 else:
     print 'The shape does not have sharp corners.'
     
-
-        
+print ''
+if isDistance(*pointList[:3]):
+    print 'The function is the distance function.'
+else:
+    print 'The function is not the distance function.'
+      
         
         
         
